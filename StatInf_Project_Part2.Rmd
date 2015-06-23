@@ -1,0 +1,81 @@
+---
+title: 'Statistical Inference Course Project: Part 2'
+author: "Emma Ideal"
+date: "June 13, 2015"
+output: html_document
+---
+
+# Overview
+In this analysis, we will investigate the effect of Vitamin C supplements on tooth growth in guinea pigs. Sixty guinea pigs were randomly assigned a supplement type (VC or OJ) and given one of three doses (0.5mg, 1mg, or 2mg). Their tooth lengths were then recorded; we will analyze differences in these tooth lengths as a function of the supplement type and dosage.
+
+# Load the Data and Basic Exploration
+First load the data in R:
+```{r}
+library(datasets)
+data(ToothGrowth)
+```
+We can look at the first several rows of the data frame: 
+```{r}
+head(ToothGrowth)
+```
+A simple summary can be found using the **summary** function:
+```{r}
+summary(ToothGrowth)
+```
+A boxplot of the data can be made:
+
+```{r, warning=FALSE, message=FALSE, fig.height=4}
+library(lattice)
+bwplot(len ~ as.factor(dose) | supp, data = ToothGrowth, 
+       main = 'Tooth Growth in Guinea Pigs', xlab = 'Dose (mg)', ylab = 'Tooth length')
+```
+
+We can see from the boxplot that larger doses lead to more tooth growth. This is true for both the VC and OJ supplements; however, for smaller doses, it seems the OJ group sees larger tooth growth than the VC group.
+
+# Summary of the Data
+We can summarize this data by computing the means and standard deviations of the tooth lengths by type of supplement (VC or OJ) and by dose size (0.5, 1, or 2 mg).
+```{r, warning=FALSE, message=FALSE}
+library(plyr)
+ddply(ToothGrowth, .(supp, dose), summarize, means = mean(len), sd = round(sd(len),2))
+```
+
+# Confidence Intervals
+(Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose)
+
+First, we run a **T test** to test the null hypothesis $H_{0}$: the mean of the tooth growth from OJ is the same as the mean of the tooth growth from VC (two-sided test). Here, we assume the VC and OJ groups are properly randomized independent samples.
+```{r}
+t.test(len ~ supp, data = ToothGrowth, paired = FALSE, var.equal = TRUE)
+```
+The 95% confidence interval (narrowly) contains 0, and therefore, we cannot reject the null hypothesis.
+
+We now want to test the following hypotheses $H_{0}$: the mean of the tooth growth from *i* dose (0.5, 1, 2 mg) is equal to the mean of the tooth growth from *j* dose (for all possible combinations *i* and *j* where *i* $\neq$ *j*).
+```{r}
+# Subset the data by dose
+subset_051 <- subset(ToothGrowth, dose %in% c(0.5, 1))
+subset_052 <- subset(ToothGrowth, dose %in% c(0.5, 2))
+subset_12  <- subset(ToothGrowth, dose %in% c(1,2))
+
+# Compute the p-values
+pval_051 <- t.test(len ~ dose, data=subset_051, var.equal = TRUE)$p.value
+pval_052 <- t.test(len ~ dose, data=subset_052, var.equal = TRUE)$p.value
+pval_12  <- t.test(len ~ dose, data=subset_12,  var.equal = TRUE)$p.value
+
+# Compute the 95% confidence intervals for the differences in the means
+int_051 <- round(t.test(len ~ dose, data=subset_051, var.equal = TRUE)$conf.int, 2)
+int_052 <- round(t.test(len ~ dose, data=subset_052, var.equal = TRUE)$conf.int, 2)
+int_12  <- round(t.test(len ~ dose, data=subset_12,  var.equal = TRUE)$conf.int, 2)
+```
+With some formatting, we get the following results:
+```{r, echo=FALSE}
+pval <- c(pval_051, pval_052, pval_12)
+intervals <- c(paste0('[',int_051[1], ',', int_051[2],']'), paste0('[',int_052[1], ',', int_052[2],']'), paste0('[',int_12[1], ',', int_12[2],']'))
+subsets <- c('(0.5, 2)', '(0.5, 1)', '(1, 2)')
+
+df <- data.frame(as.character(subsets), intervals, as.numeric(pval))
+names(df) <- c('compared doses(mg)', '95% CI', 'p values')
+df
+```
+At the levels specified by the p values, we can rule out the null hypothesis for all three cases. Since all confidence intervals are entirely below 0, this suggests that higher doses lead to more tooth growth.
+
+# Conclusions and Assumptions
+We can conclude from this study that higher doses of OJ or VC lead to greater tooth growth. At 95% confidence, it is inconclusive whether the OJ supplement leads to greater tooth growth compared with VC, however, it is likely (we would need to check) that at 90% confidence, we can conclude OJ is better than VC. In this analysis, we assume that the guinea pigs are sufficiently randomized in their assignment to VC or OJ. This justifies the assumption of equal population variances in the two samples. We also assume normality of the underlying population data, which allows us to use T tests to compute confidence intervals.
