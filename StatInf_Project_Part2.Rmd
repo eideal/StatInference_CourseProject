@@ -2,7 +2,7 @@
 title: 'Statistical Inference Course Project: Part 2'
 author: "Emma Ideal"
 date: "June 13, 2015"
-output: html_document
+output: pdf_document
 ---
 
 # Overview
@@ -40,7 +40,6 @@ ddply(ToothGrowth, .(supp, dose), summarize, means = mean(len), sd = round(sd(le
 ```
 
 # Confidence Intervals
-(Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose)
 
 First, we run a **T test** to test the null hypothesis $H_{0}$: the mean of the tooth growth from OJ is the same as the mean of the tooth growth from VC (two-sided test). Here, we assume the VC and OJ groups are properly randomized independent samples.
 ```{r}

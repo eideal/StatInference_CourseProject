@@ -2,7 +2,7 @@
 title: 'Statistical Inference Course Project: Part 1'
 author: "Emma Ideal"
 date: "June 12, 2015"
-output: html_document
+output: pdf_document
 ---
 
 # Overview
